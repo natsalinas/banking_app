@@ -1,48 +1,70 @@
-import mysql.connector 
+import mysql.connector as mysql 
 import getpass
 
-print("-----------------------------------\nWelcome to the Banking System!\n-----------------------------------")
-username = input("Enter your username: ")
-db_connection_pw = getpass.getpass("Please enter the root password: ")
+from tkinter import *
 
-def view_db(table_name, selection):
-    query = "SELECT " + selection + " FROM " + table_name
-    return query
+MY_HOST = 'localhost'
+MY_DB = 'bank'
 
-try:
-    # Establish a connection
-    db = mysql.connector.connect(
-    host="localhost", 
-    user= username,  
-    passwd= db_connection_pw,
-    database="bank"
-    )
+def validate_login():
+    try:
+        # save entered credentials as a string
+        user_login = username_entry.get()
+        user_pswd = password_entry.get()
 
-    # Check if the connection is open
-    if db.is_connected():
-        print("\nConnection is established.")
-        mycursor = db.cursor()
+        # Establish a connection
+        db = mysql.connect(host=MY_HOST, user=user_login, password=user_pswd, database=MY_DB)
+        cur = db.cursor(prepared=True)
 
-        option = int(input("What would you like to do? (1)View (2)Update (3)Delete:  "))
-        if option == 1:
-            table = input("Enter table name: ")
-            selection = input("--> Enter '*' to view the entire table or write a specific selection:  ")
-            sql_command = view_db(table, selection)
-            mycursor.execute(sql_command)
-        elif option == 2: 
-            print("Selection: Update Database")
-        elif option == 3:
-            print("Selection: Delete Database")
+        # Check if the connection is open
+        if db.is_connected():
+            username_entry.pack_forget()
+            username_label.pack_forget()
+            password_entry.pack_forget()
+            password_label.pack_forget()
+            login_button.pack_forget()
+            mycursor = db.cursor()
 
-        print("-----------------------------------\nResults\n-----------------------------------")
-        for x in mycursor:
-            print(x)
-    else:
-        print("Connection failed.")
+            title = Label(window, text="You are connected!")
+            title.pack()
 
-    # Close the connection
-    db.close()
+            print("Successfully connected to DB.")
+        else:
+            print("Connection failed.")
 
-except mysql.connector.Error as err:
-    print(f"Error: {err}")
+        # Close the connection
+        db.close()
+
+    except mysql.Error as err:
+        print(f"Error: {err}")
+
+
+# Create the main window
+window = Tk()
+window.title("Banking App")
+window.geometry("300x200")  
+
+# Username label and entry
+username_label = Label(window, text="Username:")
+username_label.pack()
+
+username = StringVar()
+username_entry = Entry(window, textvariable=username)
+username_entry.pack()
+
+# Password label and entry
+password_label = Label(window, text="Password:")
+password_label.pack()
+
+password = StringVar()
+password_entry = Entry(window, textvariable=password, show="*")
+password_entry.pack()
+
+# Login button
+login_button = Button(window, text="Login", command=validate_login)
+login_button.pack()
+
+# Start the event loop
+window.mainloop()
+
 
