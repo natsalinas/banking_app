@@ -6,7 +6,11 @@ from tkinter import *
 MY_HOST = 'localhost'
 MY_DB = 'bank'
 
+# Global variable to hold the database connection
+db = None
+
 def validate_login():
+    global db 
     try:
         # save entered credentials as a string
         user_login = username_entry.get()
@@ -14,7 +18,6 @@ def validate_login():
 
         # Establish a connection
         db = mysql.connect(host=MY_HOST, user=user_login, password=user_pswd, database=MY_DB)
-        cur = db.cursor(prepared=True)
 
         # Check if the connection is open
         if db.is_connected():
@@ -23,17 +26,36 @@ def validate_login():
             password_entry.pack_forget()
             password_label.pack_forget()
             login_button.pack_forget()
-            mycursor = db.cursor()
-
-            title = Label(window, text="You are connected!")
-            title.pack()
 
             print("Successfully connected to DB.")
+            def view_users(): 
+                try:
+                    cur = db.cursor(prepared=True)
+                    #send query 
+                    cur.execute("SELECT * FROM customer")
+                    result = cur.fetchall()
+                    
+                    # Create a Text widget with height=12 and width=40
+                    text_box = Text(window, height=20, width=50)
+                    text_box.pack(expand=True)
+
+                    text_box.insert('end', result)
+
+                except mysql.Error as err:
+                    print(f"Error: {err}")
+                finally:
+                    cur.close()
+
+            # New customer button
+            new_customer_button = Button(window, text="Add User")
+            new_customer_button.pack()
+
+            # New customer button
+            existing_customer_button = Button(window, text="View Existing Users", command=view_users)
+            existing_customer_button.pack()
+
         else:
             print("Connection failed.")
-
-        # Close the connection
-        db.close()
 
     except mysql.Error as err:
         print(f"Error: {err}")
@@ -67,4 +89,6 @@ login_button.pack()
 # Start the event loop
 window.mainloop()
 
-
+# Close the connection when the application window is closed
+if db and db.is_connected():
+    db.close()
